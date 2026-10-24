@@ -173,6 +173,10 @@
             font-weight: 600;
         }
 
+        .client-error:empty {
+            display: none;
+        }
+
         .button-row {
             display: flex;
             gap: 12px;
@@ -395,32 +399,37 @@
 
                     <div class="field-group">
                         <label for="fullName">Full Name</label>
-                        <input type="text" th:field="*{fullName}" id="fullName" placeholder="Enter full name">
+                        <input type="text" th:field="*{fullName}" id="fullName" placeholder="Enter full name" required>
                         <div class="error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></div>
+                        <div class="error client-error" data-error-for="fullName" aria-live="polite"></div>
                     </div>
 
                     <div class="field-group">
                         <label for="email">Email</label>
-                        <input type="email" th:field="*{email}" id="email" placeholder="name@example.com">
+                        <input type="email" th:field="*{email}" id="email" placeholder="name@example.com" required>
                         <div class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
+                        <div class="error client-error" data-error-for="email" aria-live="polite"></div>
                     </div>
 
                     <div class="field-group">
                         <label for="phone">Phone</label>
-                        <input type="tel" th:field="*{phone}" id="phone" placeholder="(555) 123-4567">
+                        <input type="tel" th:field="*{phone}" id="phone" placeholder="(555) 123-4567" required>
                         <div class="error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
+                        <div class="error client-error" data-error-for="phone" aria-live="polite"></div>
                     </div>
 
                     <div class="field-group">
                         <label for="department">Department</label>
-                        <input type="text" th:field="*{department}" id="department" placeholder="Engineering">
+                        <input type="text" th:field="*{department}" id="department" placeholder="Engineering" required>
                         <div class="error" th:if="${#fields.hasErrors('department')}" th:errors="*{department}"></div>
+                        <div class="error client-error" data-error-for="department" aria-live="polite"></div>
                     </div>
 
                     <div class="field-group">
                         <label for="salary">Salary</label>
-                        <input type="number" step="0.01" th:field="*{salary}" id="salary" placeholder="50000">
+                        <input type="number" step="0.01" min="0.01" th:field="*{salary}" id="salary" placeholder="50000" required>
                         <div class="error" th:if="${#fields.hasErrors('salary')}" th:errors="*{salary}"></div>
+                        <div class="error client-error" data-error-for="salary" aria-live="polite"></div>
                     </div>
 
                     <div class="button-row">
@@ -485,12 +494,40 @@
             setTimeout(() => successBanner.classList.add('fade-out'), 3200);
         }
 
-        const formFields = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="number"]');
+        const employeeForm = document.getElementById('employeeForm');
+        const formFields = [...employeeForm.querySelectorAll('input[required]')];
+
+        function validateField(field) {
+            const value = field.value.trim();
+            let message = '';
+
+            if (!value) {
+                message = `${field.labels[0].textContent} is required`;
+            } else if (field.type === 'email' && !field.validity.valid) {
+                message = 'Enter a valid email';
+            } else if (field.id === 'phone' && !/^\d{10}$/.test(value)) {
+                message = 'Phone must be exactly 10 digits';
+            } else if (field.id === 'salary' && (!field.validity.valid || Number(value) <= 0)) {
+                message = 'Salary must be greater than 0';
+            }
+
+            const errorMessage = employeeForm.querySelector(`[data-error-for="${field.id}"]`);
+            errorMessage.textContent = message;
+            field.classList.toggle('field-invalid', Boolean(message));
+            field.setAttribute('aria-invalid', String(Boolean(message)));
+            return !message;
+        }
+
         formFields.forEach(field => {
-            field.addEventListener('input', () => {
-                if (field.value.trim() !== '') {
-                    field.classList.remove('field-invalid');
-                }
+            field.addEventListener('input', () => validateField(field));
+            field.addEventListener('blur', () => validateField(field));
+        });
+
+        employeeForm.addEventListener('reset', () => {
+            formFields.forEach(field => {
+                field.classList.remove('field-invalid');
+                field.removeAttribute('aria-invalid');
+                employeeForm.querySelector(`[data-error-for="${field.id}"]`).textContent = '';
             });
         });
 
@@ -514,17 +551,11 @@
             });
         }
 
-        document.getElementById('employeeForm').addEventListener('submit', function (event) {
-            let hasEmptyRequiredField = false;
-            formFields.forEach(field => {
-                if (!field.value.trim()) {
-                    hasEmptyRequiredField = true;
-                    field.classList.add('field-invalid');
-                }
-            });
-
-            if (hasEmptyRequiredField) {
+        employeeForm.addEventListener('submit', function (event) {
+            const isValid = formFields.map(validateField).every(Boolean);
+            if (!isValid) {
                 event.preventDefault();
+                formFields.find(field => field.classList.contains('field-invalid'))?.focus();
             }
         });
     </script>
