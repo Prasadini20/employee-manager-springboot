@@ -413,7 +413,7 @@
 
                     <div class="field-group">
                         <label for="phone">Phone</label>
-                        <input type="tel" th:field="*{phone}" id="phone" placeholder="(555) 123-4567" required>
+                        <input type="tel" th:field="*{phone}" id="phone" placeholder="0711111111" required>
                         <div class="error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></div>
                         <div class="error client-error" data-error-for="phone" aria-live="polite"></div>
                     </div>
@@ -469,7 +469,7 @@
                             <td th:text="${e.email}"></td>
                             <td th:text="${e.phone}"></td>
                             <td th:text="${e.department}"></td>
-                            <td th:text="${#numbers.formatCurrency(e.salary)}">$0.00</td>
+                            <td th:text="${#numbers.formatCurrency(e.salary)}">Rs0.00</td>
                             <td>
                                 <div class="action-group">
                                     <a class="tiny-btn edit-link" th:href="@{/employees/{id}/edit(id=${e.id})}">Edit</a>
